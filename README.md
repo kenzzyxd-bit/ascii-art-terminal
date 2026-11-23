@@ -1,6 +1,6 @@
 # ASCII Art Terminal
 
-[![tests](https://github.com/kenzzyxd-bit/ascii-art-terminal/actions/workflows/tests.yml/badge.svg)](https://github.com/kenzzyxd-bit/ascii-art-terminal/actions/workflows/tests.yml)
+[![tests](https://github.com/reyzdev/ascii-art-terminal/actions/workflows/tests.yml/badge.svg)](https://github.com/reyzdev/ascii-art-terminal/actions/workflows/tests.yml)
 ![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
