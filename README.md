@@ -1,10 +1,14 @@
 # ASCII Art Terminal
 
+[![tests](https://github.com/kenzzyxd-bit/ascii-art-terminal/actions/workflows/tests.yml/badge.svg)](https://github.com/kenzzyxd-bit/ascii-art-terminal/actions/workflows/tests.yml)
+![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 Convert gambar, GIF, atau video jadi **ASCII art berwarna** yang jalan animasi langsung di terminal.
 
 Ditulis dengan Python + Pillow, output pakai **ANSI truecolor 24-bit**.
 
-![contoh](sample.png)
+![demo plasma](docs/demo.png)
 
 ## Fitur
 
