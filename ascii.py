@@ -3,6 +3,7 @@ ASCII art animator buat terminal.
 
   python ascii.py                          -> demo plasma
   python ascii.py --demo matrix            -> demo hujan karakter
+  python ascii.py --demo planet            -> demo planet 3D
   python ascii.py foto.jpg                 -> render gambar, sekali
   python ascii.py anim.gif                 -> animasi loop
   python ascii.py video.mp4                -> animasi loop (butuh ffmpeg)
@@ -109,8 +110,70 @@ def demo_matrix(w, h, t):
     return "\n".join(rows)
 
 
-DEMOS = {"plasma": demo_frame, "matrix": demo_matrix}
+SPACE = (3, 4, 12)
 
+
+def demo_planet(w, h, t):
+    """Bola gas 3D + cincin tipis + bintang. Murni matematika, tanpa file."""
+    cx, cy = w / 2.0, h / 2.0
+    R = min(0.30 * w, 0.85 * h)      # radius bola (dalam kolom)
+    ra = R * ASPECT                  # radius vertikal (koreksi aspek)
+    # arah cahaya dari kiri-atas-depan
+    lx, ly, lz = -0.55, -0.45, 0.70
+    ln = math.sqrt(lx * lx + ly * ly + lz * lz)
+    lx, ly, lz = lx / ln, ly / ln, lz / ln
+    hn = math.sqrt(lx * lx + ly * ly + (lz + 1.0) ** 2)
+
+    rows = []
+    for y in range(h):
+        out = []
+        for x in range(w):
+            dx = (x - cx) / R
+            dy = (y - cy) / ra
+            d2 = dx * dx + dy * dy
+            on_sphere = d2 <= 1.0
+
+            ru = dx / 1.95           # cincin: ellipse pipih
+            rv = dy / 0.42
+            rr = math.sqrt(ru * ru + rv * rv)
+            on_ring = 0.60 < rr < 1.02 and not (0.71 < rr < 0.77)  # celah Cassini
+            front_ring = dy > 0.0
+
+            rgb = SPACE
+            ch = " "
+            if on_sphere and not (on_ring and front_ring):
+                dz = math.sqrt(1.0 - d2)
+                lam = max(0.0, dx * lx + dy * ly + dz * lz)
+                lon = math.atan2(dx, dz)
+                band = math.sin(dy * 9 + 1.6 * math.sin(lon * 2 + t * 0.9))
+                tb = 0.5 + 0.5 * band
+                r0, g0, b0 = colorsys.hsv_to_rgb(0.05 + 0.06 * tb, 0.62, 1.0)
+                limb = 0.35 + 0.65 * dz
+                lit = min(1.0, (0.12 + 0.88 * lam) * limb)
+                sp = max(0.0, (dx * lx + dy * ly + dz * (lz + 1.0)) / hn) ** 28 * 0.9
+                rgb = (
+                    min(255, int(r0 * 255 * lit + sp * 255)),
+                    min(255, int(g0 * 255 * lit + sp * 255)),
+                    min(255, int(b0 * 255 * lit + sp * 255)),
+                )
+                ch = RAMP[max(1, min(9, int(lit * 9.99)))]
+            elif on_ring:
+                stripe = 0.5 + 0.5 * math.sin(rr * 40)
+                dim = (0.35 + 0.65 * stripe) * (0.55 if not front_ring else 1.0)
+                rgb = (int(210 * dim), int(196 * dim), int(150 * dim))
+                ch = ".:*#"[min(3, int(dim * 3.99))]
+            else:
+                hv = (x * 73856093) ^ (y * 19349663)
+                if hv % 61 == 0:
+                    b = 60 + hv % 90
+                    rgb, ch = (b, b, min(255, b + 25)), "."
+
+            out.append(_cell(rgb, ch))
+        rows.append("".join(out) + "\x1b[0m")
+    return "\n".join(rows)
+
+
+DEMOS = {"plasma": demo_frame, "matrix": demo_matrix, "planet": demo_planet}
 
 
 def image_to_ascii(img, w, boost=1.0):

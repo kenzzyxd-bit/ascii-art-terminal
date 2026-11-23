@@ -8,11 +8,13 @@ Convert gambar, GIF, atau video jadi **ASCII art berwarna** yang jalan animasi l
 
 Ditulis dengan Python + Pillow, output pakai **ANSI truecolor 24-bit**.
 
-![demo plasma + matrix](docs/demo.png)
+![demo: plasma, matrix, planet](docs/demo.png)
+
+Tiga demo bawaan (atas ke bawah): **plasma**, **matrix**, **planet**.
 
 ## Fitur
 
-- **Dua mode demo** — plasma halus atau hujan karakter matrix, tanpa file apa pun
+- **Tiga mode demo** tanpa file: plasma (gelombang halus), matrix (hujan karakter), planet (bola 3D + cincin, murni matematika)
 - **Gambar / GIF / PNG / JPG** — dibaca lewat Pillow
 - **Video (MP4/MKV/WebM/MOV)** — frame diambil lewat `ffmpeg`
 - **Truecolor ANSI** `\x1b[38;2;R;G;Bm`, bukan 256 warna
@@ -31,17 +33,32 @@ ffmpeg                      # opsional, cuma buat video
 ```bash
 python ascii.py                          # demo plasma
 python ascii.py --demo matrix            # demo hujan karakter
+python ascii.py --demo planet            # demo planet 3D
 python ascii.py foto.jpg                 # render sekali
 python ascii.py anim.gif                 # animasi loop
 python ascii.py video.mp4                # video, lewat ffmpeg
 python ascii.py foto.jpg --boost 2       # gambar gelap biar lebih kebaca
 python ascii.py anim.gif --width 120 --fps 20
-python ascii.py --once --demo matrix     # cetak 1 frame (buat tes/screenshot)
+python ascii.py --once --demo planet     # cetak 1 frame (buat tes/screenshot)
 ```
 
 Stop: `Ctrl+C`.
 
 Windows: jalankan di **Windows Terminal** (truecolor gak jalan di `cmd.exe` lama), atau double-click `run.bat`.
+
+## Contoh: gambar → ASCII
+
+Input `docs/sample.png`, hasilnya (warna asli dari gambar):
+
+| Gambar asli | Hasil ASCII |
+|---|---|
+| <img src="docs/sample.png" width="330" alt="sample" /> | <img src="docs/sample-ascii.png" width="470" alt="hasil ascii" /> |
+
+```bash
+python ascii.py docs/sample.png
+```
+
+Tips: gambar dengan latar gelap perlu `--boost 2` biar bagian gelapnya tetap kebaca.
 
 ## Cara kerja
 
@@ -50,14 +67,15 @@ Windows: jalankan di **Windows Terminal** (truecolor gak jalan di `cmd.exe` lama
 3. Tiap karakter diwarnai sesuai piksel aslinya, satu string per baris
 4. Frame ditulis setelah `\x1b[H` (kursor balik ke atas) → jadi animasi
 
-Performa di laptop uji: plasma ~5.6 ms/frame, matrix ~3.4 ms (118×28 kolom, >170 fps di Python murni).
+Demo dibuat murni dari matematika (sinus + vektor), bukan file gambar, jadi tetap ringan. Performa di laptop uji: plasma ~5.6 ms/frame, matrix ~3.4 ms, planet ~6.3 ms (118×28 kolom, >150 fps di Python murni).
 
 ## Struktur
 
 ```
-ascii.py     script utama
-test.py      cek cepat (assert): py -3 test.py -> ok
-run.bat      launcher Windows (auto-install Pillow)
+ascii.py            script utama
+test.py             cek cepat (assert): py -3 test.py -> ok
+run.bat             launcher Windows (auto-install Pillow)
+docs/               gambar demo untuk README
 ```
 
 ## Lisensi
