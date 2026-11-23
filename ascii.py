@@ -1,12 +1,13 @@
 """
 ASCII art animator buat terminal.
 
-  python ascii.py                      -> demo plasma (gak butuh file apa-apa)
-  python ascii.py foto.jpg             -> render gambar, sekali
-  python ascii.py anim.gif             -> animasi loop
-  python ascii.py video.mp4            -> animasi loop (butuh ffmpeg)
+  python ascii.py                          -> demo plasma
+  python ascii.py --demo matrix            -> demo hujan karakter
+  python ascii.py foto.jpg                 -> render gambar, sekali
+  python ascii.py anim.gif                 -> animasi loop
+  python ascii.py video.mp4                -> animasi loop (butuh ffmpeg)
   python ascii.py anim.gif --width 120 --fps 20
-  python ascii.py --once               -> cetak 1 frame demo, buat tes
+  python ascii.py --once --demo matrix     -> cetak 1 frame (buat tes/screenshot)
 
 Stop: Ctrl+C. Terminal: pakai Windows Terminal, teksnya kecilin (Ctrl+-).
 """
@@ -24,16 +25,15 @@ from PIL import Image, ImageSequence
 if os.name == "nt":
     os.system("")  # nyalain ANSI escape di terminal Windows
 
+try:
+    sys.stdout.reconfigure(encoding="utf-8")  # katakana + escape aman walau output di-pipe
+except (AttributeError, ValueError):
+    pass
+
 RAMP = " .:-=+*#%@"
 ASPECT = 0.5  # sel karakter ~2x tinggi -> tinggi grid dibagi 2 biar gak ketarik
 HIDE, SHOW, HOME, CLEAR = "\x1b[?25l", "\x1b[?25h", "\x1b[H", "\x1b[2J"
 VIDEO_EXT = {".mp4", ".mov", ".mkv", ".webm", ".avi", ".m4v", ".flv"}
-
-# 64 warna buat demo, dihitung sekali
-PALETTE = [
-    tuple(int(c * 255) for c in colorsys.hsv_to_rgb(i / 64, 0.75, 1.0))
-    for i in range(64)
-]
 
 
 def grid_size(fallback_w=100):
@@ -41,24 +41,76 @@ def grid_size(fallback_w=100):
     return max(20, sz.columns - 2), max(6, sz.lines - 2)
 
 
+# Palet: 24 hue x 32 tingkat terang. Di-precompute biar lookup-nya murah.
+def _build_pal(hue0, hue1, sat=0.8):
+    out = []
+    for i in range(24):
+        h = hue0 + (hue1 - hue0) * i / 23
+        out.append(
+            [
+                tuple(int(c * 255) for c in colorsys.hsv_to_rgb(h % 1.0, sat, 0.10 + 0.90 * v / 31))
+                for v in range(32)
+            ]
+        )
+    return out
+
+
+PAL_RAINBOW = _build_pal(0.0, 1.0)
+
+
+def _cell(rgb, ch):
+    return f"\x1b[38;2;{rgb[0]};{rgb[1]};{rgb[2]}m{ch}"
+
+
 def demo_frame(w, h, t):
-    """Plasma: gak butuh input, cuma sinus. Bagus buat tes + bikin konten."""
+    """Plasma halus: gelombang besar, warna ikut terang-gelap (bukan confetti)."""
     rows = []
     cx, cy = w / 2, h / 2
     for y in range(h):
         out = []
         for x in range(w):
             n = (
-                math.sin(x * 0.12 + t)
-                + math.sin(y * 0.16 - t * 0.8)
-                + math.sin((x + y) * 0.08 + t * 0.5)
-                + math.sin(math.hypot(x - cx, y - cy) * 0.18 - t * 1.2)
+                math.sin(x * 0.07 + t * 0.9)
+                + math.sin(y * 0.11 - t * 0.7)
+                + math.sin((x + y) * 0.05 + t * 0.45)
+                + math.sin(math.hypot(x - cx, y - cy) * 0.11 - t)
             )
             v = (n + 4) / 8
-            r, g, b = PALETTE[int((x * 3 + y * 2 + t * 40) % 64)]
-            out.append(f"\x1b[38;2;{r};{g};{b}m{RAMP[min(9, int(v * 10))]}")
+            hi = int((x * 0.5 + y * 0.35 + v * 14 + t * 6) % 24)
+            out.append(_cell(PAL_RAINBOW[hi][min(31, int(v * 31))], RAMP[min(9, int(v * 9.99))]))
         rows.append("".join(out) + "\x1b[0m")
     return "\n".join(rows)
+
+
+MATRIX_GLYPH = "01ｱｲｳｴｵｶｷｸ<>[]{}=+*#%&@"
+
+
+def demo_matrix(w, h, t):
+    """Hujan karakter hijau, tiap kolom beda kecepatan + ekor yang memudar."""
+    rows = []
+    n_glyph = len(MATRIX_GLYPH)
+    for y in range(h):
+        out = []
+        for x in range(w):
+            speed = 7 + (x * 37 % 9)
+            head = (t * speed + (x * 101 % 61)) % (h + 14)
+            d = head - y
+            if 0 <= d < 13:
+                fade = 1 - d / 13
+                if d < 1:
+                    rgb = (215, 255, 220)
+                else:
+                    rgb = (0, int(35 + 205 * fade * fade), int(25 + 105 * fade))
+                ch = MATRIX_GLYPH[(x * 7 + y * 13 + int(t * speed)) % n_glyph]
+            else:
+                rgb, ch = (0, 26, 12), " "
+            out.append(_cell(rgb, ch))
+        rows.append("".join(out) + "\x1b[0m")
+    return "\n".join(rows)
+
+
+DEMOS = {"plasma": demo_frame, "matrix": demo_matrix}
+
 
 
 def image_to_ascii(img, w, boost=1.0):
@@ -138,13 +190,21 @@ def main():
     boost = fflag("--boost", 1.0)
     width = flag("--width", grid_size()[0])
 
+    demo = "plasma"
+    if "--demo" in args:
+        demo = args[args.index("--demo") + 1]
+        del args[args.index("--demo"):args.index("--demo") + 2]
+    if demo not in DEMOS:
+        sys.exit(f"demo gak ada: {demo} (pilihan: {', '.join(DEMOS)})")
+    scene = DEMOS[demo]
+
     if once and not args:
         sys.stdout.write(CLEAR + HIDE)
-        sys.stdout.write(demo_frame(*grid_size(), 1.5) + SHOW + "\n")
+        sys.stdout.write(scene(*grid_size(), 1.5) + SHOW + "\n")
         return
 
     if not args:
-        play([demo_frame], width, fps, once)
+        play([scene], width, fps, once)
         return
 
     path = args[0]

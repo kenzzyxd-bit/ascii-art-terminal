@@ -8,11 +8,11 @@ Convert gambar, GIF, atau video jadi **ASCII art berwarna** yang jalan animasi l
 
 Ditulis dengan Python + Pillow, output pakai **ANSI truecolor 24-bit**.
 
-![demo plasma](docs/demo.png)
+![demo plasma + matrix](docs/demo.png)
 
 ## Fitur
 
-- **Mode demo** — tanpa file apa pun, langsung animasi plasma
+- **Dua mode demo** — plasma halus atau hujan karakter matrix, tanpa file apa pun
 - **Gambar / GIF / PNG / JPG** — dibaca lewat Pillow
 - **Video (MP4/MKV/WebM/MOV)** — frame diambil lewat `ffmpeg`
 - **Truecolor ANSI** `\x1b[38;2;R;G;Bm`, bukan 256 warna
@@ -30,12 +30,13 @@ ffmpeg                      # opsional, cuma buat video
 
 ```bash
 python ascii.py                          # demo plasma
+python ascii.py --demo matrix            # demo hujan karakter
 python ascii.py foto.jpg                 # render sekali
 python ascii.py anim.gif                 # animasi loop
 python ascii.py video.mp4                # video, lewat ffmpeg
 python ascii.py foto.jpg --boost 2       # gambar gelap biar lebih kebaca
 python ascii.py anim.gif --width 120 --fps 20
-python ascii.py --once                   # cetak 1 frame (buat tes/screenshot)
+python ascii.py --once --demo matrix     # cetak 1 frame (buat tes/screenshot)
 ```
 
 Stop: `Ctrl+C`.
@@ -49,7 +50,7 @@ Windows: jalankan di **Windows Terminal** (truecolor gak jalan di `cmd.exe` lama
 3. Tiap karakter diwarnai sesuai piksel aslinya, satu string per baris
 4. Frame ditulis setelah `\x1b[H` (kursor balik ke atas) → jadi animasi
 
-Performa di laptop uji: ~4 ms/frame di 118×28 kolom (>200 fps di Python murni).
+Performa di laptop uji: plasma ~5.6 ms/frame, matrix ~3.4 ms (118×28 kolom, >170 fps di Python murni).
 
 ## Struktur
 
