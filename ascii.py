@@ -4,6 +4,7 @@ ASCII art animator buat terminal.
   python ascii.py                          -> demo plasma
   python ascii.py --demo matrix            -> demo hujan karakter
   python ascii.py --demo planet            -> demo planet 3D
+  python ascii.py --demo tunnel            -> demo lorong 3D berwarna
   python ascii.py foto.jpg                 -> render gambar, sekali
   python ascii.py anim.gif                 -> animasi loop
   python ascii.py video.mp4                -> animasi loop (butuh ffmpeg)
@@ -173,8 +174,36 @@ def demo_planet(w, h, t):
     return "\n".join(rows)
 
 
-DEMOS = {"plasma": demo_frame, "matrix": demo_matrix, "planet": demo_planet}
+TAU = 6.283185307179586
 
+
+def demo_tunnel(w, h, t):
+    """Lorong 3D: warna muter ke dalam, terang tetap (gerak dari warna, bukan kedip)."""
+    cx, cy = (w - 1) / 2.0, (h - 1) / 2.0
+    unit = min(w, h) * 0.5
+    rows = []
+    for y in range(h):
+        out = []
+        ry = (y - cy) * 2.0            # koreksi aspek: 1 baris ~ 2 kolom
+        for x in range(w):
+            rx = x - cx
+            r = math.hypot(rx, ry) + 0.6
+            rn = r / unit
+            ang = math.atan2(ry, rx)
+            depth = unit / r + t * 1.6     # makin ke tengah makin jauh
+            hole = min(1.0, max(0.0, (rn - 0.10) / 0.30))   # gelap di tengah
+            edge = min(1.0, max(0.0, 1.0 - (rn - 1.25) / 0.7))
+            rings = 0.5 + 0.5 * (0.5 + 0.5 * math.sin(depth * 3.0))
+            v = min(1.0, (0.28 + 0.72 * hole) * edge) * rings
+            hue = (ang / TAU + 0.09 * depth) % 1.0
+            r0, g0, b0 = colorsys.hsv_to_rgb(hue, 0.85, v)
+            rgb = (int(r0 * 255), int(g0 * 255), int(b0 * 255))
+            out.append(_cell(rgb, RAMP[max(1, min(9, int(v * 9.99)))]))
+        rows.append("".join(out) + "\x1b[0m")
+    return "\n".join(rows)
+
+
+DEMOS = {"plasma": demo_frame, "matrix": demo_matrix, "planet": demo_planet, "tunnel": demo_tunnel}
 
 def image_to_ascii(img, w, boost=1.0):
     h = max(1, int(img.height / img.width * w * ASPECT))

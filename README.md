@@ -10,11 +10,15 @@ Ditulis dengan Python + Pillow, output pakai **ANSI truecolor 24-bit**.
 
 ![demo: plasma, matrix, planet](docs/demo.png)
 
-Tiga demo bawaan (atas ke bawah): **plasma**, **matrix**, **planet**.
+Empat demo bawaan. Statis (atas ke bawah): **plasma**, **matrix**, **planet**. Animasi:
+
+![demo tunnel](docs/demo.gif)
+
+**tunnel** — lorong 3D berwarna yang bergerak ke dalam.
 
 ## Fitur
 
-- **Tiga mode demo** tanpa file: plasma (gelombang halus), matrix (hujan karakter), planet (bola 3D + cincin, murni matematika)
+- **Empat mode demo** tanpa file: plasma (gelombang halus), matrix (hujan karakter), planet (bola 3D + cincin), tunnel (lorong 3D) — semua murni matematika
 - **Gambar / GIF / PNG / JPG** — dibaca lewat Pillow
 - **Video (MP4/MKV/WebM/MOV)** — frame diambil lewat `ffmpeg`
 - **Truecolor ANSI** `\x1b[38;2;R;G;Bm`, bukan 256 warna
@@ -34,6 +38,7 @@ ffmpeg                      # opsional, cuma buat video
 python ascii.py                          # demo plasma
 python ascii.py --demo matrix            # demo hujan karakter
 python ascii.py --demo planet            # demo planet 3D
+python ascii.py --demo tunnel            # demo lorong 3D
 python ascii.py foto.jpg                 # render sekali
 python ascii.py anim.gif                 # animasi loop
 python ascii.py video.mp4                # video, lewat ffmpeg
@@ -67,7 +72,7 @@ Tips: gambar dengan latar gelap perlu `--boost 2` biar bagian gelapnya tetap keb
 3. Tiap karakter diwarnai sesuai piksel aslinya, satu string per baris
 4. Frame ditulis setelah `\x1b[H` (kursor balik ke atas) → jadi animasi
 
-Demo dibuat murni dari matematika (sinus + vektor), bukan file gambar, jadi tetap ringan. Performa di laptop uji: plasma ~5.6 ms/frame, matrix ~3.4 ms, planet ~6.3 ms (118×28 kolom, >150 fps di Python murni).
+Demo dibuat murni dari matematika (sinus + vektor), bukan file gambar, jadi tetap ringan. Performa di laptop uji: plasma ~5.6 ms/frame, matrix ~3.4 ms, planet ~6.3 ms, tunnel ~6.0 ms (118×28 kolom, >150 fps di Python murni).
 
 ## Struktur
 
